@@ -1,0 +1,10 @@
+node_modules
+dist
+data
+*.db*
+.git
+ticket-*
+graphify-out
+test-results
+playwright-report
+CLAUDE.md
