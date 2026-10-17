@@ -6,6 +6,11 @@ import { api, ApiError } from './api.ts';
 import type { Doc } from './api.ts';
 import { SharePanel } from './SharePanel.tsx';
 
+type Presence = { viewers: { id: number; name: string }[]; version: number; updatedBy: string };
+
+// Heartbeat interval; ?presenceMs= lets the e2e test poll faster (never below 0.5 s).
+const PRESENCE_MS = Math.max(500, Number(new URLSearchParams(location.search).get('presenceMs')) || 10_000);
+
 type Status = 'Saved' | 'Unsaved changes' | 'Saving…' | 'Error saving';
 
 const TOOLS: { label: string; text: string; mark: [string, Record<string, unknown>?]; run: (e: TiptapEditor) => boolean }[] = [
@@ -39,6 +44,26 @@ function DocEditor({ doc }: { doc: Doc }) {
   const version = useRef(doc.version);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const saving = useRef(false);
+  const [viewers, setViewers] = useState<Presence['viewers']>([]);
+  const [changedBy, setChangedBy] = useState('');
+
+  // Heartbeat: tell the server I am here, learn who else is and whether someone saved a newer version.
+  useEffect(() => {
+    const beat = () =>
+      api<Presence>(`/documents/${doc.id}/presence`, { method: 'POST' }).then((p) => {
+        setViewers(p.viewers);
+        if (!saving.current && p.version > version.current) setChangedBy(p.updatedBy);
+      }, () => {}); // best effort: a missed beat just means a stale chip for a few seconds
+    const leave = () => void fetch(`/api/documents/${doc.id}/presence`, { method: 'DELETE', keepalive: true }).catch(() => {});
+    beat();
+    const t = setInterval(beat, PRESENCE_MS);
+    addEventListener('pagehide', leave);
+    return () => {
+      clearInterval(t);
+      removeEventListener('pagehide', leave);
+      leave();
+    };
+  }, [doc.id]);
 
   async function save(ed: TiptapEditor) {
     if (saving.current) {
@@ -124,6 +149,11 @@ function DocEditor({ doc }: { doc: Doc }) {
           <h1 className="title">{doc.title}</h1>
         )}
         <span className="badge">{doc.isOwner ? 'Owned by you' : `Shared by ${doc.owner.name}`}</span>
+        {viewers.map((v) => (
+          <span key={v.id} className="badge viewer">
+            {v.name} is viewing
+          </span>
+        ))}
         <span role="status" className="status">
           {status}
         </span>
@@ -137,6 +167,14 @@ function DocEditor({ doc }: { doc: Doc }) {
       {conflictBy && (
         <div role="alert" className="banner">
           This document was changed by {conflictBy}. Reload to get the latest version.{' '}
+          <button type="button" onClick={() => location.reload()}>
+            Reload
+          </button>
+        </div>
+      )}
+      {changedBy && !conflictBy && (
+        <div aria-live="polite" className="banner">
+          {changedBy} saved changes.{' '}
           <button type="button" onClick={() => location.reload()}>
             Reload
           </button>

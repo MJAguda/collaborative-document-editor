@@ -3,6 +3,7 @@ import type { RequestHandler } from 'express';
 import multer, { MulterError } from 'multer';
 import type { DB } from './db.ts';
 import type { SessionUser } from './auth.ts';
+import type { Presence } from './presence.ts';
 import { ImportError, importFile, MAX_UPLOAD_BYTES, sanitize } from './content.ts';
 
 type DocRow = {
@@ -33,7 +34,7 @@ function cleanTitle(value: unknown): string | null {
   return title.length >= 1 && title.length <= 200 ? title : null;
 }
 
-export function documentsRouter(db: DB): Router {
+export function documentsRouter(db: DB, presence: Presence): Router {
   const router = Router();
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } });
 
@@ -134,6 +135,20 @@ export function documentsRouter(db: DB): Router {
 
   router.get('/:id', (_req, res) => {
     res.json(toJson(res.locals.doc, res.locals.user.id));
+  });
+
+  // Heartbeat: record me, return the others still allowed to see this doc plus the latest version for the "saved changes" notice.
+  router.post('/:id/presence', (_req, res) => {
+    const { user, doc } = res.locals;
+    presence.touch(doc.id, user);
+    const viewers = presence.viewers(doc.id).filter((v) => v.id !== user.id && findAccessible(doc.id, v.id));
+    const by = db.prepare('SELECT name FROM users WHERE id = ?').get(doc.updated_by) as { name: string };
+    res.json({ viewers, version: doc.version, updatedBy: by.name });
+  });
+
+  router.delete('/:id/presence', (_req, res) => {
+    presence.leave(res.locals.doc.id, res.locals.user.id);
+    res.status(204).end();
   });
 
   router.patch('/:id', (req, res) => {

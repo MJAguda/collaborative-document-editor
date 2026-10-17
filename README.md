@@ -13,6 +13,7 @@ A small full-stack document editor: log in as a seeded user, create and rename d
 - Autosave 1 second after typing stops, with a visible Saved / Saving / Error status.
 - Import a file as a new document; "My documents" and "Shared with me" lists with owner badges.
 - Sharing by email.
+- Presence: "<Name> is viewing" chips in the editor header, and a "<Name> saved changes. Reload" notice when someone else saved a newer version (shown before you hit a 409). It is polling, so expect up to ~10 s lag; presence is in memory, so it needs a single server instance (as deployed) and resets on restart.
 
 ## Supported uploads
 `.txt`, `.md`, `.docx`, max 2 MB (a converted document must be under 512 KB, and a `.docx` must expand to under 3 MB). Each file becomes a new document. Kept: headings, bold/italic/underline, lists, links. Dropped: images, tables, colours, fonts, and unsafe HTML (scripts, styles, event handlers).

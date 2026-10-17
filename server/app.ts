@@ -4,6 +4,8 @@ import { MulterError } from 'multer';
 import { join } from 'node:path';
 import type { DB } from './db.ts';
 import { authRouter, requireUser } from './auth.ts';
+import { createPresence } from './presence.ts';
+import type { Presence } from './presence.ts';
 import { documentsRouter } from './documents.ts';
 import { ImportError, MAX_REQUEST_BYTES } from './content.ts';
 
@@ -26,12 +28,12 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   }
 };
 
-export function createApp(db: DB, clientDir?: string): express.Express {
+export function createApp(db: DB, clientDir?: string, presence: Presence = createPresence()): express.Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: MAX_REQUEST_BYTES }));
   app.use('/api', authRouter(db));
-  app.use('/api/documents', requireUser(db), documentsRouter(db));
+  app.use('/api/documents', requireUser(db), documentsRouter(db, presence));
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found' });
   });
