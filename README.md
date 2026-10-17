@@ -4,6 +4,8 @@ A small full-stack document editor: log in as a seeded user, create and rename d
 
 **Live demo:** `https://<your-app>.fly.dev` (fill in after deploying, see "Deploy").
 
+**Submission:** see [SUBMISSION.md](SUBMISSION.md) (links, test script, what works, what is left).
+
 ## Demo accounts
 `alice@example.com`, `bob@example.com`, `carol@example.com`; password `demo1234` for all (seeded on first start; there is no sign-up). To switch user: Log out and log in as another account (or use a second browser profile).
 
@@ -14,6 +16,13 @@ A small full-stack document editor: log in as a seeded user, create and rename d
 - Import a file as a new document; "My documents" and "Shared with me" lists with owner badges.
 - Sharing by email.
 - Presence: "<Name> is viewing" chips in the editor header, and a "<Name> saved changes. Reload" notice when someone else saved a newer version (shown before you hit a 409). It is polling, so expect up to ~10 s lag; presence is in memory, so it needs a single server instance (as deployed) and resets on restart.
+
+## Screenshots
+Regenerate with `npm run screenshots`.
+
+![Document list](docs/screenshots/02-doc-list.png)
+![Editor formatting](docs/screenshots/03-editor-formatting.png)
+![Presence](docs/screenshots/07-presence.png)
 
 ## Supported uploads
 `.txt`, `.md`, `.docx`, max 2 MB (a converted document must be under 512 KB, and a `.docx` must expand to under 3 MB). Each file becomes a new document. Kept: headings, bold/italic/underline, lists, links. Dropped: images, tables, colours, fonts, and unsafe HTML (scripts, styles, event handlers).

@@ -10,7 +10,8 @@
     "start": "node server/index.ts",
     "typecheck": "tsc",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "screenshots": "SCREENSHOTS=1 playwright test screenshots"
   },
   "dependencies": {
     "better-sqlite3": "13.0.3",
