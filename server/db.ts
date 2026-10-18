@@ -49,12 +49,19 @@ CREATE TABLE IF NOT EXISTS comments (
   created_at TEXT NOT NULL
 );`;
 
+// CDE-004: databases created before anchored comments lack the column; add it once (idempotent).
+export function addAnchoredColumn(db: DB) {
+  const cols = db.prepare('PRAGMA table_info(comments)').all() as { name: string }[];
+  if (!cols.some((c) => c.name === 'anchored')) db.exec('ALTER TABLE comments ADD COLUMN anchored INTEGER NOT NULL DEFAULT 0');
+}
+
 export function openDb(path: string): DB {
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   const db = new Database(path);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
+  addAnchoredColumn(db);
   if (!db.prepare('SELECT 1 FROM users').get()) {
     const insert = db.prepare('INSERT INTO users (email, name, password_hash) VALUES (?, ?, ?)');
     for (const u of SEED_USERS) insert.run(u.email, u.name, hashPassword(SEED_PASSWORD));

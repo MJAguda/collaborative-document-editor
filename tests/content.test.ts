@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { deflateRawSync } from 'node:zlib';
+import { Comment } from '../src/commentMark.ts';
 import { ImportError, importFile, sanitize } from '../server/content.ts';
 
 const fixture = (name: string) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url));
@@ -110,5 +111,40 @@ describe('importFile', () => {
     const err = await importFile(name, buffer).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ImportError);
     expect(err).toMatchObject({ status: 400, message });
+  });
+});
+
+describe('anchored comment spans', () => {
+  it('keeps span data-comment-id when numeric', () => {
+    expect(sanitize('<p>a <span data-comment-id="12">word</span> b</p>')).toBe('<p>a <span data-comment-id="12">word</span> b</p>');
+  });
+
+  it.each(['1 onclick=x', 'abc', '', '12345678901', '-1', '1.5'])('drops data-comment-id=%j', (v) => {
+    const out = sanitize(`<p><span data-comment-id="${v}">w</span></p>`);
+    expect(out).not.toContain('data-comment-id');
+    expect(out).not.toContain('onclick');
+  });
+
+  it('strips other data-* and event attributes on a span', () => {
+    const out = sanitize('<p><span data-comment-id="3" data-x="1" onclick="x()" style="color:red" class="c">w</span></p>');
+    expect(out).toBe('<p><span data-comment-id="3">w</span></p>');
+  });
+
+  it('still strips a script inside the span', () => {
+    expect(sanitize('<p><span data-comment-id="3">w<script>alert(1)</script></span></p>')).toBe('<p><span data-comment-id="3">w</span></p>');
+  });
+
+  it('keeps the exact output of the editor comment mark', () => {
+    const [tag, attrs] = Comment.config.renderHTML!.call({ options: {} } as never, { HTMLAttributes: { 'data-comment-id': '7' }, mark: {} as never }) as [string, Record<string, string>, number];
+    expect(tag).toBe('span');
+    const html = `<p>x <span data-comment-id="${attrs['data-comment-id']}">y</span></p>`;
+    expect(sanitize(html)).toBe(html);
+  });
+
+  it('sanitises imports the same way', async () => {
+    const { html } = await importFile('a.md', Buffer.from('hi <span data-comment-id="1 onclick=x">w</span> <span data-comment-id="5">k</span>'));
+    expect(html).toContain('data-comment-id="5"');
+    expect(html).not.toContain('onclick');
+    expect(html).not.toContain('"1 ');
   });
 });

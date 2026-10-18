@@ -25,10 +25,16 @@ export class ImportError extends Error {
 
 // Must cover everything the editor (Tiptap StarterKit, headings 1-3) can emit.
 const OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: ['p', 'br', 'h1', 'h2', 'h3', 'strong', 'em', 'u', 's', 'code', 'pre', 'blockquote', 'hr', 'ul', 'ol', 'li', 'a'],
-  allowedAttributes: { a: ['href', 'target', 'rel'], ol: ['start'] },
+  allowedTags: ['p', 'br', 'h1', 'h2', 'h3', 'strong', 'em', 'u', 's', 'code', 'pre', 'blockquote', 'hr', 'ul', 'ol', 'li', 'a', 'span'],
+  allowedAttributes: { a: ['href', 'target', 'rel'], ol: ['start'], span: ['data-comment-id'] },
   allowedSchemes: ['http', 'https', 'mailto'],
-  transformTags: { h4: 'h3', h5: 'h3', h6: 'h3', b: 'strong', i: 'em' },
+  transformTags: { h4: 'h3', h5: 'h3', h6: 'h3', b: 'strong', i: 'em',
+    // The one allowed span attribute (comment anchor) must be digits only; any other value is dropped.
+    span: (tagName, attribs) => ({
+      tagName,
+      attribs: (/^\d{1,10}$/.test(attribs['data-comment-id'] ?? '') ? { 'data-comment-id': attribs['data-comment-id']! } : {}) as Record<string, string>,
+    }),
+  },
 };
 
 export function sanitize(html: string): string {

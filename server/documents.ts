@@ -247,7 +247,7 @@ export function documentsRouter(db: DB, presence: Presence): Router {
   });
 
   // Document-level comments: same access as the document (param 'id'); author or owner may resolve/delete.
-  type CommentRow = { id: number; body: string; resolved: number; created_at: string; user_id: number; author_name: string };
+  type CommentRow = { id: number; body: string; resolved: number; anchored: number; created_at: string; user_id: number; author_name: string };
   const findComment = (docId: number, commentId: string) =>
     /^\d+$/.test(commentId)
       ? (db
@@ -261,6 +261,7 @@ export function documentsRouter(db: DB, presence: Presence): Router {
     id: c.id,
     body: c.body,
     resolved: c.resolved === 1,
+    anchored: c.anchored === 1,
     createdAt: c.created_at,
     author: { id: c.user_id, name: c.author_name },
     canModify: c.user_id === userId || ownerId === userId,
@@ -286,8 +287,8 @@ export function documentsRouter(db: DB, presence: Presence): Router {
       return;
     }
     const result = db
-      .prepare('INSERT INTO comments (document_id, user_id, body, created_at) VALUES (?, ?, ?, ?)')
-      .run(doc.id, user.id, body, new Date().toISOString());
+      .prepare('INSERT INTO comments (document_id, user_id, body, anchored, created_at) VALUES (?, ?, ?, ?, ?)')
+      .run(doc.id, user.id, body, (req.body ?? {}).anchored === true ? 1 : 0, new Date().toISOString());
     res.status(201).json(commentJson(findComment(doc.id, String(result.lastInsertRowid))!, user.id, doc.owner_id));
   });
 

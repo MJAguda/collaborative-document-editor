@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
+import Database from 'better-sqlite3';
+import { addAnchoredColumn } from '../server/db.ts';
 import { createDoc, loginAs, setup } from './helpers.ts';
 import type { Agent } from './helpers.ts';
 
@@ -28,6 +30,25 @@ describe('comments', () => {
     const list = await bob.get(`/api/documents/${docId}/comments`).expect(200);
     expect(list.body.map((c: { body: string }) => c.body)).toEqual(['First', 'Second']);
     expect(list.body.map((c: { canModify: boolean }) => c.canModify)).toEqual([false, true]);
+  });
+
+  it('records whether a comment is anchored (only when anchored is exactly true)', async () => {
+    const plain = await post(alice, docId, 'plain').expect(201);
+    expect(plain.body.anchored).toBe(false);
+    const anchored = await alice.post(`/api/documents/${docId}/comments`).send({ body: 'a', anchored: true }).expect(201);
+    expect(anchored.body.anchored).toBe(true);
+    const junk = await alice.post(`/api/documents/${docId}/comments`).send({ body: 'j', anchored: 'yes' }).expect(201);
+    expect(junk.body.anchored).toBe(false);
+    const list = await bob.get(`/api/documents/${docId}/comments`).expect(200);
+    expect(list.body.map((c: { anchored: boolean }) => c.anchored)).toEqual([false, true, false]);
+  });
+
+  it('adds the anchored column to a database created before CDE-004', () => {
+    const old = new Database(':memory:');
+    old.exec('CREATE TABLE comments (id INTEGER PRIMARY KEY, document_id INTEGER, user_id INTEGER, body TEXT, resolved INTEGER NOT NULL DEFAULT 0, created_at TEXT)');
+    addAnchoredColumn(old);
+    addAnchoredColumn(old); // idempotent
+    expect((old.prepare('PRAGMA table_info(comments)').all() as { name: string }[]).map((c) => c.name)).toContain('anchored');
   });
 
   it('does not change the document version', async () => {

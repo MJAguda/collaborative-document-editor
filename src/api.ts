@@ -17,6 +17,7 @@ export type Comment = {
   id: number;
   body: string;
   resolved: boolean;
+  anchored: boolean;
   createdAt: string;
   author: { id: number; name: string };
   canModify: boolean;

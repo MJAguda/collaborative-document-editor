@@ -182,3 +182,5 @@ input.title:focus-visible { border-color: var(--color-border-strong); outline-of
   * { transition: none !important; }
 }
 .viewer { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-muted-foreground); }
+.content .ProseMirror span[data-comment-id] { background: var(--color-accent-soft); border-bottom: 2px solid var(--color-accent); }
+.comments .quote { display: block; max-width: 100%; margin: var(--space-xs) 0; padding: 0 var(--space-sm); text-align: left; font-family: var(--font-doc); font-style: italic; color: var(--color-accent-ink); background: var(--color-accent-soft); border: 0; border-left: 3px solid var(--color-accent); border-radius: 0; overflow-wrap: anywhere; }

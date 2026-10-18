@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import type { Editor as TiptapEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Comment } from './commentMark.ts';
 import { api, ApiError } from './api.ts';
 import type { Doc } from './api.ts';
 import { CommentsPanel } from './CommentsPanel.tsx';
@@ -96,7 +97,7 @@ function DocEditor({ doc }: { doc: Doc }) {
   }
 
   const editor = useEditor({
-    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } })],
+    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } }), Comment],
     content: doc.content,
     onUpdate: ({ editor: ed }) => {
       setStatus('Unsaved changes');
@@ -196,7 +197,7 @@ function DocEditor({ doc }: { doc: Doc }) {
         ))}
       </div>
       <EditorContent editor={editor} className="content" />
-      <CommentsPanel docId={doc.id} />
+      <CommentsPanel docId={doc.id} editor={editor} />
       {doc.isOwner && <SharePanel docId={doc.id} initial={doc.shares} />}
     </article>
   );
