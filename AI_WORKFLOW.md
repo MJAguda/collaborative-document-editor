@@ -52,7 +52,7 @@
 - **UX checks.**
   - Playwright runs the real flows with two users: format, reload, import, share, edit, the conflict banner, presence chips and comment permissions.
   - The agent captured screenshots and read them back.
-  - [CONFIRM OR EDIT] I tested each feature by hand at `localhost:3000` with two browser sessions (Alice and Bob).
+  - I tested each feature by hand at `localhost:3000` with two browser sessions (Alice and Bob).
   - The visual design came from a dedicated UI tool, with measured contrast ratios.
 - **My own calls stayed mine.** I made the stack, deploy target, auth model, conflict UX, size limits, scope cuts and every stretch decision. When the agents disagreed with each other, for example on how big the limits should be, I picked the measured option.
 

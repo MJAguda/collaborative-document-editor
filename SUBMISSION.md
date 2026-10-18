@@ -3,7 +3,7 @@
 ## 1. Links
 - Live URL: not deployed. Run it locally in about a minute (see section 7).
 - Video walkthrough: https://drive.google.com/file/d/16xY1si4jAYQ0kQ5vFxU1vHTBYkECsGvI/view?usp=sharing (also in `VIDEO_URL.txt`)
-- Repo: https://github.com/MJAguda/collaborative-document-editor · Google Drive folder: TODO
+- Repo: https://github.com/MJAguda/collaborative-document-editor · Google Drive folder: Everything is in the github repo
 
 ## 2. Demo accounts
 `alice@example.com`, `bob@example.com`, `carol@example.com`; password `demo1234` (seeded on first start; there is no sign-up).
