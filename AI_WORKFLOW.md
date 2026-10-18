@@ -13,7 +13,7 @@
 1. **Turning an open prompt into a scoped plan.** The intake agent split the brief into 15 testable requirements and raised the questions only I could answer: deploy target, auth model, upload types, conflict behaviour, permission levels. I answered about 20 of those in a few minutes instead of discovering them halfway through the build.
 2. **Version-true dependencies.** Before any code was written, the designer checked every library against the actual npm releases and my Node version (22.21). For example, it confirmed Tiptap 3's StarterKit already includes underline and lists, and that `isomorphic-dompurify` 4.x would not install on Node 22.21. That avoided a class of "works in the docs, breaks on my machine" problems.
 3. **Tests at volume.** The final suite is 85 Vitest/Supertest tests and 8 Playwright specs, more than I would have written by hand in the time. The bulk of them cover the permission matrix, sanitising and upload limits.
-4. **Adversarial review I wouldn't have had time for.** The reviewer agent built zip bombs, crafted payloads and parallel-request scripts, and ran the Docker image at the deployed 256 MB memory limit.
+4. **Adversarial review I wouldn't have had time for.** The reviewer agent built zip bombs, crafted payloads and parallel-request scripts, and ran the Docker image at the 256 MB memory limit the deploy config targets.
 
 ## What AI-generated output I changed or rejected
 

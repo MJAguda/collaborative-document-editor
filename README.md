@@ -2,7 +2,7 @@
 
 A small full-stack document editor: log in as a seeded user, create and rename documents, edit rich text with autosave, import `.txt`/`.md`/`.docx` files, and share documents with other users. React + Tiptap on the client, Express 5 + SQLite on the server.
 
-**Live demo:** `https://<your-app>.fly.dev` (fill in after deploying, see "Deploy").
+**Live demo:** not deployed. Run it locally (see below).
 
 **Submission:** see [SUBMISSION.md](SUBMISSION.md) (links, test script, what works, what is left).
 
@@ -16,7 +16,7 @@ A small full-stack document editor: log in as a seeded user, create and rename d
 - Import a file as a new document; "My documents" and "Shared with me" lists with owner badges.
 - Sharing by email.
 - Comments: a thread under the editor. Select text and click Comment to anchor the comment to it (the text is highlighted; the panel quotes it, and clicking the quote jumps to it); with no selection it is a document-level comment. Anyone with access can comment; the author or the owner can resolve, reopen or delete. Plain text only. Resolving or deleting removes the highlight; reopening does not put it back. If the highlighted text is deleted, the comment shows "text removed".
-- Presence: "<Name> is viewing" chips in the editor header, and a "<Name> saved changes. Reload" notice when someone else saved a newer version (shown before you hit a 409). It is polling, so expect up to ~10 s lag; presence is in memory, so it needs a single server instance (as deployed) and resets on restart.
+- Presence: "<Name> is viewing" chips in the editor header, and a "<Name> saved changes. Reload" notice when someone else saved a newer version (shown before you hit a 409). It is polling, so expect up to ~10 s lag; presence is in memory, so it needs a single server instance and resets on restart.
 
 ## Screenshots
 Regenerate with `npm run screenshots`.
@@ -50,6 +50,7 @@ npm run test:e2e     # Playwright 1.63.0; run `npx playwright install chromium` 
 The E2E run starts its own server on :3100 with `DB_PATH=:memory:`.
 
 ## Deploy (Fly.io)
+Not deployed for this submission. The config is included, and these are the steps to deploy it:
 ```bash
 fly auth login
 fly launch --no-deploy --copy-config
