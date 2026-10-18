@@ -13,7 +13,7 @@ browser (React + Tiptap) --/api (JSON, cookie)--> Express 5 --> SQLite (better-s
 - A one-image deploy, because a single image plus one volume is the smallest setup a reviewer can open and run.
 
 ## Data model
-Four tables: `users` (scrypt hashes), `sessions` (random token, user, created_at), `documents` (owner, title, HTML content, `version`, `updated_at`, `updated_by`), `shares` (document, user). `version` makes saves optimistic: a stale version returns 409, and `updated_by` names who changed it.
+Five tables (the fifth, `comments`, is below): `users` (scrypt hashes), `sessions` (random token, user, created_at), `documents` (owner, title, HTML content, `version`, `updated_at`, `updated_by`), `shares` (document, user). `version` makes saves optimistic: a stale version returns 409, and `updated_by` names who changed it. `comments` (document with ON DELETE CASCADE, author, plain-text body 1-2000 chars, `resolved`, `created_at`) is a document-level thread, deliberately not anchored to text so it never touches the sanitiser, autosave or the 409 flow. Its routes sit on the documents router under the same `:id` access check (401/404 unchanged); resolve and delete are limited to the author or the owner (403), and a comment id from another document is 404.
 
 ## Decisions and trade-offs
 - HTML content passed through one `sanitize-html` allow-list on every save and import, instead of Tiptap JSON: simpler import (md/docx produce HTML) at the cost of trusting one sanitiser.

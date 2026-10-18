@@ -13,6 +13,15 @@ export type Doc = {
   shares: Share[];
 };
 
+export type Comment = {
+  id: number;
+  body: string;
+  resolved: boolean;
+  createdAt: string;
+  author: { id: number; name: string };
+  canModify: boolean;
+};
+
 export class ApiError extends Error {
   status: number;
   body: Record<string, unknown>;

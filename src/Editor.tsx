@@ -4,6 +4,7 @@ import type { Editor as TiptapEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { api, ApiError } from './api.ts';
 import type { Doc } from './api.ts';
+import { CommentsPanel } from './CommentsPanel.tsx';
 import { SharePanel } from './SharePanel.tsx';
 
 type Presence = { viewers: { id: number; name: string }[]; version: number; updatedBy: string };
@@ -195,6 +196,7 @@ function DocEditor({ doc }: { doc: Doc }) {
         ))}
       </div>
       <EditorContent editor={editor} className="content" />
+      <CommentsPanel docId={doc.id} />
       {doc.isOwner && <SharePanel docId={doc.id} initial={doc.shares} />}
     </article>
   );

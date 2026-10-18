@@ -22,6 +22,7 @@ declare global {
     interface Locals {
       user: SessionUser;
       doc: DocRow;
+      comment: { id: number; user_id: number };
     }
   }
 }
@@ -242,6 +243,83 @@ export function documentsRouter(db: DB, presence: Presence): Router {
       res.status(404).json({ error: 'Not shared with this user' });
       return;
     }
+    res.status(204).end();
+  });
+
+  // Document-level comments: same access as the document (param 'id'); author or owner may resolve/delete.
+  type CommentRow = { id: number; body: string; resolved: number; created_at: string; user_id: number; author_name: string };
+  const findComment = (docId: number, commentId: string) =>
+    /^\d+$/.test(commentId)
+      ? (db
+          .prepare(
+            `SELECT c.*, u.name AS author_name FROM comments c JOIN users u ON u.id = c.user_id
+             WHERE c.id = ? AND c.document_id = ?`,
+          )
+          .get(Number(commentId), docId) as CommentRow | undefined)
+      : undefined;
+  const commentJson = (c: CommentRow, userId: number, ownerId: number) => ({
+    id: c.id,
+    body: c.body,
+    resolved: c.resolved === 1,
+    createdAt: c.created_at,
+    author: { id: c.user_id, name: c.author_name },
+    canModify: c.user_id === userId || ownerId === userId,
+  });
+
+  router.get('/:id/comments', (_req, res) => {
+    const { user, doc } = res.locals;
+    const rows = db
+      .prepare(
+        `SELECT c.*, u.name AS author_name FROM comments c JOIN users u ON u.id = c.user_id
+         WHERE c.document_id = ? ORDER BY c.id`,
+      )
+      .all(doc.id) as CommentRow[];
+    res.json(rows.map((c) => commentJson(c, user.id, doc.owner_id)));
+  });
+
+  router.post('/:id/comments', (req, res) => {
+    const { user, doc } = res.locals;
+    const raw = (req.body ?? {}).body;
+    const body = typeof raw === 'string' ? raw.trim() : '';
+    if (body.length < 1 || body.length > 2000) {
+      res.status(400).json({ error: 'Comment must be 1-2000 characters' });
+      return;
+    }
+    const result = db
+      .prepare('INSERT INTO comments (document_id, user_id, body, created_at) VALUES (?, ?, ?, ?)')
+      .run(doc.id, user.id, body, new Date().toISOString());
+    res.status(201).json(commentJson(findComment(doc.id, String(result.lastInsertRowid))!, user.id, doc.owner_id));
+  });
+
+  // 404 if the comment is not in this document; 403 unless I wrote it or own the document.
+  const ownComment: RequestHandler = (req, res, next) => {
+    const { user, doc } = res.locals;
+    const c = findComment(doc.id, String(req.params.commentId));
+    if (!c) {
+      res.status(404).json({ error: 'Comment not found' });
+      return;
+    }
+    if (c.user_id !== user.id && doc.owner_id !== user.id) {
+      res.status(403).json({ error: 'Only the author or the document owner can do this' });
+      return;
+    }
+    res.locals.comment = c;
+    next();
+  };
+
+  router.patch('/:id/comments/:commentId', ownComment, (req, res) => {
+    const { user, doc, comment } = res.locals;
+    const resolved = (req.body ?? {}).resolved;
+    if (typeof resolved !== 'boolean') {
+      res.status(400).json({ error: 'resolved must be true or false' });
+      return;
+    }
+    db.prepare('UPDATE comments SET resolved = ? WHERE id = ?').run(resolved ? 1 : 0, comment.id);
+    res.json(commentJson(findComment(doc.id, String(comment.id))!, user.id, doc.owner_id));
+  });
+
+  router.delete('/:id/comments/:commentId', ownComment, (_req, res) => {
+    db.prepare('DELETE FROM comments WHERE id = ?').run(res.locals.comment.id);
     res.status(204).end();
   });
 
